@@ -1,17 +1,21 @@
 import sounddevice as sd
 import numpy as np
 
-device_list = sd.query_devices()
-print(device_list)
+# サンプリング周波数を設定
+fs = 44100  # サンプリング周波数
 
-def callback(indata, frames, time, status):
-    print(indata)
+def callback(indata, outdata, frames, time, status):
+    if status:
+        print(status, file=sys.stderr)
+    # 入力音声を逆相に反転
+    reverse = -1 * np.ones_like(indata)
+    # 反転音声を出力
+    outdata[:] = reverse * indata
 
-while True:
-    duration = 10
-    with sd.InputStream(
-            channels=1,
-            dtype='float32',
-            callback=callback
-        ):
-        sd.sleep(int(duration * 1000))
+# マイク入力音声をリアルタイムで反転再生
+with sd.Stream(channels=1, blocksize=1024, samplerate=fs, callback=callback):
+    print("録音開始")
+    while True:
+        response = input("録音を終了しますか？ y/n: ")
+        if response == 'y':
+            break
